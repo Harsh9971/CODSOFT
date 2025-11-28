@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Available Quizzes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>Available Quizzes</h2>
+
+        <div id="list" class="quiz-list">
+            <p>Loading quizzes...</p>
+        </div>
+    </div>
+
+    <script>
+        fetch("http://localhost:5000/quiz")
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById("list");
+                list.innerHTML = ""; // clear "Loading..."
+
+                if (data.length === 0) {
+                    list.innerHTML = "<p>No quizzes available.</p>";
+                    return;
+                }
+
+                data.forEach(q => {
+                    const item = document.createElement("div");
+                    item.className = "quiz-item";
+
+                    item.innerHTML = `
+                        <span class="quiz-title">${q.title}</span>
+                        <a href="take.html?id=${q._id}">
+                            <button>Take Quiz</button>
+                        </a>
+                    `;
+
+                    list.appendChild(item);
+                });
+            })
+            .catch(err => {
+                document.getElementById("list").innerHTML =
+                    "<p style='color:red;'>Error loading quizzes.</p>";
+                console.error("Fetch Error:", err);
+            });
+    </script>
+</body>
+</html>

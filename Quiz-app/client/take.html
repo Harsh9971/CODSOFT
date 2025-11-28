@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="container">
+    <h2 id="title">Loading...</h2>
+
+    <div id="quiz"></div>
+
+    <button id="submitBtn" onclick="submitQuiz()" style="display:none;">
+        Submit Quiz
+    </button>
+</div>
+
+<script>
+let quizData = null;
+const id = new URLSearchParams(window.location.search).get("id");
+
+// Fetch quiz from backend
+fetch("http://localhost:5000/quiz/" + id)
+    .then(res => res.json())
+    .then(data => {
+
+        // If API returns array → use first element
+        if (Array.isArray(data)) data = data[0];
+
+        quizData = data;
+
+        if (!quizData) {
+            document.getElementById("title").innerText = "Quiz Not Found!";
+            return;
+        }
+
+        // Set quiz title
+        document.getElementById("title").innerText = quizData.title;
+
+        // Render questions
+        const quizDiv = document.getElementById("quiz");
+        quizDiv.innerHTML = ""; // clear loading text
+
+        quizData.questions.forEach((q, i) => {
+            let block = document.createElement("div");
+            block.classList.add("question-block");
+
+            block.innerHTML = `
+                <p><strong>${i + 1}. ${q.question}</strong></p>
+                ${q.options.map((opt, idx) => `
+                    <label>
+                        <input type="radio" name="q${i}" value="${idx}">
+                        ${opt}
+                    </label><br>
+                `).join("")}
+            `;
+
+            quizDiv.appendChild(block);
+        });
+
+        // Show submit button after quiz loads
+        document.getElementById("submitBtn").style.display = "block";
+    })
+    .catch(err => {
+        document.getElementById("title").innerText = "Error loading quiz!";
+        console.error("Error:", err);
+    });
+
+
+// Submit quiz
+function submitQuiz() {
+    if (!quizData) return alert("Quiz not loaded!");
+
+    let score = 0;
+    let total = quizData.questions.length;
+
+    // Check if all questions answered
+    for (let i = 0; i < total; i++) {
+        const selected = document.querySelector(`input[name='q${i}']:checked`);
+        if (!selected) {
+            alert(`Please answer question ${i + 1}`);
+            return;
+        }
+
+        if (Number(selected.value) === quizData.questions[i].correctAnswer) {
+            score++;
+        }
+    }
+
+    // Save result and go to results page
+    localStorage.setItem("score", score);
+    localStorage.setItem("total", total);
+
+    window.location.href = "results.html";
+}
+</script>
+
+</body>
+</html>
+
